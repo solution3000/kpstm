@@ -1,4 +1,3 @@
 
 
-积分法时间偏移程序
-
+seismic prestack time migration
