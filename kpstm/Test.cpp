@@ -77,5 +77,80 @@ void CTest::test_boost_filesystem(int argc, char **argv)
 
 void CTest::test_boost_file_mapping(int argc, char **argv)
 {
+	using namespace boost::filesystem;
+	using namespace boost::interprocess;
+	using namespace std;
 
+	path p("D:/tbb44.zip");
+
+	//create file mappable object
+	file_mapping mp(p.string().c_str(), read_write);
+
+	//create mapped region from mappable object
+	mapped_region region(mp, read_write);
+	
+	//madvise something
+	region.advise(mapped_region::advice_willneed);
+
+	cout << region.get_address() << endl;
+	cout << region.get_size() << endl;
+	cout << region.get_page_size() << endl;
+	
+	//destroy
+	region.~mapped_region();
+	
+	return;
+}
+
+void CTest::test_grid(int argc, char **argv)
+{
+	using namespace std;
+
+	CGrid1D<int> g1d_int(0, 10, 1);
+	
+	cout << "Grid1D:\n";
+	cout << g1d_int.x0() << endl;
+	cout << g1d_int.x1() << endl;
+	cout << g1d_int.dx() << endl;
+	cout << g1d_int.nx() << endl;
+
+
+	CGrid2D<float> g2d_float(
+		0.0, 1.0, 0.1,
+		1.0, 2.0, 0.3
+		);
+
+	cout << "Grid2D:\n";
+	cout << g2d_float.x0() << endl;
+	cout << g2d_float.x1() << endl;
+	cout << g2d_float.dx() << endl;
+	cout << g2d_float.nx() << endl;
+
+	cout << g2d_float.y0() << endl;
+	cout << g2d_float.y1() << endl;
+	cout << g2d_float.dy() << endl;
+	cout << g2d_float.ny() << endl;
+
+	CGrid3D<float> g3d_float(
+		0.0, 1.0, 0.5,
+		1, 2, 0.2,
+		3, 10, 0.3
+		);
+	cout << "Grid3D:\n";
+	cout << g3d_float.x0() << endl;
+	cout << g3d_float.x1() << endl;
+	cout << g3d_float.dx() << endl;
+	cout << g3d_float.nx() << endl;
+
+	cout << g3d_float.y0() << endl;
+	cout << g3d_float.y1() << endl;
+	cout << g3d_float.dy() << endl;
+	cout << g3d_float.ny() << endl;
+
+	cout << g3d_float.z0() << endl;
+	cout << g3d_float.z1() << endl;
+	cout << g3d_float.dz() << endl;
+	cout << g3d_float.nz() << endl;
+
+	return;
 }

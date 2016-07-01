@@ -74,9 +74,11 @@
     <None Include="card.json" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Grid.hpp" />
     <ClInclude Include="Test.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Grid.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Test.cpp" />
   </ItemGroup>
