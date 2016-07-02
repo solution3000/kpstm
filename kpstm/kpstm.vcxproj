@@ -43,7 +43,7 @@
     <LibraryPath>D:\Program Files %28x86%29\Microsoft SDKs\MPI\Lib\x86;D:\boost_1_60_vc12_x86_x64\boost_1_60_0\vc12_x86\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\boost_1_60_0;D:\Program Files %28x86%29\Microsoft SDKs\MPI\Include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\boost_1_60_0;D:\Program Files %28x86%29\Microsoft SDKs\MPI\Include;D:\eigen-eigen-07105f7124f9;$(IncludePath)</IncludePath>
     <LibraryPath>D:\Program Files %28x86%29\Microsoft SDKs\MPI\Lib\x86;D:\boost_1_60_0\vc12_x86\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
