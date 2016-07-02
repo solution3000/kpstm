@@ -58,37 +58,42 @@ struct CGeometry
 {
 public:
 	CGeometry(
-		       double x1, double y1, double cdp1, double line1,  //第一个点
-			   double x2, double y2, double cdp2, double line2,  //第二个点
-			   double x3, double y3, double cdp3, double line3,  //第三个点
-			   double x4, double y4, double cdp4, double line4   //第四个点，用来验证
-		      );
-	~CGeometry();
+		double x1, double y1, double cdp1, double line1,  //第一个点
+		double x2, double y2, double cdp2, double line2,  //第二个点
+		double x3, double y3, double cdp3, double line3,  //第三个点
+		double x4, double y4, double cdp4, double line4   //第四个点，用来验证
+		)
+	{
+		p1_ = Point(x1, y1, cdp1, line1);
+		p2_ = Point(x2, y2, cdp2, line2);
+		p3_ = Point(x3, y3, cdp3, line3);
+		p4_ = Point(x4, y4, cdp4, line4);
+	}
+	~CGeometry(){}
 public:
 	struct Point
 	{
-		Point(double x, double y, double cdp, double line)
+		Point(double x=0, double y=0, double cdp=0, double line=0)
 		{
 			x_ = x;
 			y_ = y;
 			cdp_ = cdp;
 			line_ = line;
 		}
-
 		double x_;     //大地坐标x
 		double y_;     //大地坐标y
-
 		double cdp_;   //cdp坐标
 		double line_;  //线坐标
 	};
 public:
-
 	Matrix<double, 2,3> matxy2sx_; // (x,y)->(cdp,line)
 	Matrix<double, 2,3> matsx2xy_;  //(cdp,line)->(x,y)
-
 public:
 	Point p1_, p2_, p3_, p4_;
-  
-
+public:
+	//(x, y)->(cdp,line)
+	void xy2sx(double x, double y, double &cdp, double &line);
+	//(cdp, line)->(x,y)
+	void sx2xy(double cdp, double line, double &x, double &y);
 };
 
