@@ -42,6 +42,10 @@
     <IncludePath>D:\boost_1_60_vc12_x86_x64\boost_1_60_0;D:\Program Files %28x86%29\Microsoft SDKs\MPI\Include;$(IncludePath)</IncludePath>
     <LibraryPath>D:\Program Files %28x86%29\Microsoft SDKs\MPI\Lib\x86;D:\boost_1_60_vc12_x86_x64\boost_1_60_0\vc12_x86\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>D:\boost_1_60_0;D:\Program Files %28x86%29\Microsoft SDKs\MPI\Include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Program Files %28x86%29\Microsoft SDKs\MPI\Lib\x86;D:\boost_1_60_0\vc12_x86\lib;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -50,6 +54,7 @@
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libboost_filesystem-vc120-mt-gd-1_60.lib;msmpi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -74,10 +79,12 @@
     <None Include="card.json" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Card.hpp" />
     <ClInclude Include="Grid.hpp" />
     <ClInclude Include="Test.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Card.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Test.cpp" />

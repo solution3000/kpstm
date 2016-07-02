@@ -45,11 +45,8 @@ private:
 };
 
 /*
-
 2D 网格{x0:dx:x1}*{y0:dy:y1}
-
 设定之后只读，不准更改！
-
 */
 
 template<class T>
@@ -93,11 +90,8 @@ private:
 
 
 /*
-
 3D 网格: {x0:dx:x1} * {y0:dy:y1} * {z0:dz:z1}
-
 设定之后只读，不准更改！
-
 */
 template<class T>
 class CGrid3D : CGrid
