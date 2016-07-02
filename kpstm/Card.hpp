@@ -8,7 +8,7 @@ public:
 	CCard();
 	virtual ~CCard()=0;
 public:
-	bool parse_input();  //输出参数
+	bool parse_input();  //输入参数
 	bool parse_geo();    //观测系统参数
 	bool parse_output(); //输出参数
 	bool parse_ckpt();   //checkpoint参数

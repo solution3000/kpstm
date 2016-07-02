@@ -80,11 +80,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Card.hpp" />
+    <ClInclude Include="Geometry.hpp" />
     <ClInclude Include="Grid.hpp" />
     <ClInclude Include="Test.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Card.cpp" />
+    <ClCompile Include="Geometry.cpp" />
     <ClCompile Include="Grid.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Test.cpp" />

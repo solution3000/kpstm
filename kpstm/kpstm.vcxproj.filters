@@ -34,6 +34,9 @@
     <ClInclude Include="Card.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Geometry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Test.cpp">
@@ -46,6 +49,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Card.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Geometry.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

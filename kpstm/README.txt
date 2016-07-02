@@ -18,4 +18,5 @@ seismic prestack time migration
 需要的第三方库：
 
 MPICH
-Boost
+BOOST
+EIGEN
