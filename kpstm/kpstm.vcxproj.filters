@@ -23,6 +23,9 @@
     <None Include="card.json">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="survey.m">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Test.hpp">
@@ -54,5 +57,10 @@
     <ClCompile Include="Geometry.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="survey.JPG">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>
