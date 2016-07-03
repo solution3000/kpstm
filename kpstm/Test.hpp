@@ -8,7 +8,7 @@
 #include <boost/interprocess/mapped_region.hpp>
 
 #include "Grid.hpp"
-
+#include "Geometry.hpp"
 
 
 class CTest
@@ -23,6 +23,7 @@ public:
 	static void test_boost_file_mapping(int argc, char **argv);
 public:
 	static void test_grid(int argc, char **argv);
+	static void test_geometry(int argc, char **argv);
 };
 
 
