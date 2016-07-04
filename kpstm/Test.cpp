@@ -38,6 +38,8 @@ copy
 copy_file
 resize_file
 */
+
+
 void CTest::test_boost_filesystem(int argc, char **argv)
 {
 	using namespace boost::filesystem;
@@ -102,6 +104,7 @@ void CTest::test_boost_file_mapping(int argc, char **argv)
 	return;
 }
 
+
 void CTest::test_grid(int argc, char **argv)
 {
 	using namespace std;
@@ -156,21 +159,61 @@ void CTest::test_grid(int argc, char **argv)
 }
 
 /*
-592000, 4308000, 1, 1,
-592000, 4365475, 2300,1,
-654475, 4308000, 1, 2500,
-654475, 4308000, 1, 2500,
+342204.00 6380040.00 1025 5550
+337685.00 6395805.00 1025 6206
+351119.00 6399655.00 1584 6206
+355638.00 6383890.00 1584 5550
 */
-/*
-xycord = 289849.9, 2226522.5, 296880.6, 2236857.8, 273313.4, 2237771.69
-lincdp = 1200, 6000, 1200, 7000, 2000, 6000
 
-289849.9, 2226522.5, 1200, 6000,
-296880.6, 2236857.8, 1200, 7000,
-273313.4, 2237771.69 2000, 6000
-*/
 
 void CTest::test_geometry(int argc, char **argv)
 {
+	using namespace std;
+	CGeometry geo(
+		342204.00, 6380040.00, 1025, 5550,
+		337685.00, 6395805.00, 1025, 6206,
+		351119.00, 6399655.00, 1584, 6206,
+		355638.00, 6383890.00, 1584, 5550
+		);
+	
+	cout << geo.Mxy2sx_ << endl;
+	// 0.038452031536422   0.011022183984338   -82455.41370732605
+	//-0.011019910713241   0.038452332603035  -236006.3625749549
+	
+	cout << geo.Msx2xy_ << endl;
+	//24.032200357781754   -6.888719512195123  35580.3387925957
+	//6.887298747763370    24.032012195122075  623960.2851100615
+
+	double x, y, line, cdp;
+	geo.xy2sx(geo.p4_.x_, geo.p4_.y_, line, cdp);
+	
+	cout<< line << endl;
+	cout << cdp << endl;
+
+	geo.sx2xy(geo.p4_.line_, geo.p4_.cdp_, x, y);
+
+	cout << x << endl;
+	cout << y << endl;
+
+	line = 1255;
+	cdp = 5955;
+
+	geo.sx2xy(line, cdp, x, y);
+	cout << x << endl;
+	cout << y << endl;
+
+}
+
+void CTest::test_glog(int argc, char **argv)
+{
+	google::InitGoogleLogging(argv[0]);
+	google::SetLogDestination(google::INFO, "./log.txt");
+
+	LOG(INFO) << "FOUND" << google::COUNTER << std::endl;
+	LOG(INFO) << "hello, world";
+	LOG(WARNING) << "warning test";
+	LOG(ERROR) << "error test";
+
+	return;
 
 }

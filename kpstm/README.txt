@@ -20,3 +20,5 @@ seismic prestack time migration
 MPICH
 BOOST
 EIGEN
+GLOG
+GFLAGS

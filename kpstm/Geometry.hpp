@@ -61,7 +61,7 @@ public:
 		double x1, double y1, double line1, double cdp1,   //第一个点
 		double x2, double y2, double line2, double cdp2,   //第二个点
 		double x3, double y3, double line3, double cdp3,   //第三个点
-		double x4, double y4, double line4,  double cdp4  //第四个点，用来验证
+		double x4, double y4, double line4,  double cdp4   //第四个点，用来验证
 		)
 	{
 		p1_ = Point(x1, y1, line1, cdp1);
@@ -89,8 +89,8 @@ public:
 		double cdp_;   //cdp坐标
 	};
 public:
-	Matrix<double, 2,3> matxy2sx_; // (x,y)->(line,cdp)
-	Matrix<double, 2,3> matsx2xy_;  //(line,cdp)->(x,y)
+	Matrix<double, 2,3> Mxy2sx_; // (x,y)->(line,cdp)
+	Matrix<double, 2,3> Msx2xy_;  //(line,cdp)->(x,y)
 public:
 	Point p1_, p2_, p3_, p4_;
 public:
@@ -104,5 +104,5 @@ private:
 
 //  http://www.geo.uib.no/eworkshop/nav-processing/geometry/
 //  https://sourceforge.net/projects/seismic3dsurvey/ 
-// https://sourceforge.net/projects/botoseis/  
-// http://www.tenaxgeo.com/resources.html  free tool
+//  https://sourceforge.net/projects/botoseis/  
+//  http://www.tenaxgeo.com/resources.html  free tool
