@@ -223,14 +223,28 @@ void CTest::test_glog(int argc, char **argv)
 
 }
 
+//vs2013报错，对C++11支持不好
+// https://github.com/nlohmann/json
+//#include <json.hpp>
+
+void CTest::test_card(int argc, char **argv)
+{
+	//json内不能有注释
+	//CCard::test("./c.json");
+}
+
+
+
 void CTest::run(int argc, char **argv)
 {
 
-	CTest::test_glog(argc, argv);
+	test_glog(argc, argv);
 
-	//CTest::test_mpi(argc, argv);
-	//CTest::test_boost_filesystem(argc, argv);
-	//CTest::test_boost_file_mapping(argc, argv);
-	CTest::test_grid(argc, argv);
-	CTest::test_geometry(argc, argv);
+	//test_mpi(argc, argv);
+	//test_boost_filesystem(argc, argv);
+	//test_boost_file_mapping(argc, argv);
+	//test_grid(argc, argv);
+	//test_geometry(argc, argv);
+	test_card(argc, argv);
+	
 }

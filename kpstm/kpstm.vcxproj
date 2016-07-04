@@ -66,7 +66,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>D:\boost_1_60_vc12_x86_x64\boost_1_60_0;D:\eigen-eigen-07105f7124f9;D:\google;D:\Program Files %28x86%29\Microsoft SDKs\MPI\Include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\boost_1_60_vc12_x86_x64\boost_1_60_0;D:\eigen-eigen-07105f7124f9;D:\google;D:\json\include;D:\Program Files %28x86%29\Microsoft SDKs\MPI\Include;$(IncludePath)</IncludePath>
     <LibraryPath>D:\Program Files %28x86%29\Microsoft SDKs\MPI\Lib\x86;D:\google\lib\release;D:\boost_1_60_vc12_x86_x64\boost_1_60_0\vc12_x86\lib;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -138,7 +138,13 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="card.json" />
+    <None Include="checkpoint.json" />
+    <None Include="geometry.json" />
+    <None Include="input.json" />
+    <None Include="output.json" />
     <None Include="survey.m" />
+    <None Include="velocity.json" />
+    <None Include="xmigt.json" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Card.hpp" />

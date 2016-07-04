@@ -26,6 +26,24 @@
     <None Include="survey.m">
       <Filter>资源文件</Filter>
     </None>
+    <None Include="checkpoint.json">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="geometry.json">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="input.json">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="output.json">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="velocity.json">
+      <Filter>资源文件</Filter>
+    </None>
+    <None Include="xmigt.json">
+      <Filter>资源文件</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Test.hpp">

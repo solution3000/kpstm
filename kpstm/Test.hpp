@@ -12,6 +12,8 @@
 
 #include "Grid.hpp"
 #include "Geometry.hpp"
+#include "Card.hpp"
+
 
 
 class CTest
@@ -32,6 +34,7 @@ public:
 public:
 	static void test_grid(int argc, char **argv);
 	static void test_geometry(int argc, char **argv);
+	static void test_card(int argc, char **argv);
 };
 
 

@@ -2,6 +2,15 @@
 /*
 作业卡读取类
 */
+
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/foreach.hpp>
+#include <iostream>
+#include <string>
+#include <sstream>
+
+
 class CCard
 {
 public:
@@ -14,6 +23,8 @@ public:
 	bool parse_ckpt();   //checkpoint参数
 	bool parse_mig();    //偏移控制参数
 	bool parse_vel();    //速度场参数
+public:
+	static void test(const char *cardfile);
 };
 
 /*时间偏移作业卡*/
