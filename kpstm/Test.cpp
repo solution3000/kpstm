@@ -108,52 +108,60 @@ void CTest::test_boost_file_mapping(int argc, char **argv)
 void CTest::test_grid(int argc, char **argv)
 {
 	using namespace std;
+	using namespace boost;
+
 
 	CGrid1D<int> g1d_int(0, 10, 1);
-	
-	cout << "Grid1D:\n";
-	cout << g1d_int.x0() << endl;
-	cout << g1d_int.x1() << endl;
-	cout << g1d_int.dx() << endl;
-	cout << g1d_int.nx() << endl;
 
+	LOG(INFO) << "Grid1D:" << endl;
+	LOG(INFO) << format("\t(x0,x1,dx,nx)=(%d,%d,%d,%d)") %
+		g1d_int.x0() %
+		g1d_int.x1() %
+		g1d_int.dx() %
+		g1d_int.nx() << endl;
 
 	CGrid2D<float> g2d_float(
 		0.0, 1.0, 0.1,
 		1.0, 2.0, 0.3
 		);
 
-	cout << "Grid2D:\n";
-	cout << g2d_float.x0() << endl;
-	cout << g2d_float.x1() << endl;
-	cout << g2d_float.dx() << endl;
-	cout << g2d_float.nx() << endl;
+	LOG(INFO) << "Grid2D:" << endl;
+	LOG(INFO) << format("\t(x0,x1,dx,nx)=(%g,%g,%g,%d)") %
+		g2d_float.x0() %
+		g2d_float.x1() %
+		g2d_float.dx() %
+		g2d_float.nx() << endl;
 
-	cout << g2d_float.y0() << endl;
-	cout << g2d_float.y1() << endl;
-	cout << g2d_float.dy() << endl;
-	cout << g2d_float.ny() << endl;
+	LOG(INFO) << format("\t(y0,y1,dy,ny)=(%g,%g,%g,%d)") %
+		g2d_float.y0() %
+		g2d_float.y1() %
+		g2d_float.dy() %
+		g2d_float.ny() << endl;
 
 	CGrid3D<float> g3d_float(
 		0.0, 1.0, 0.5,
 		1, 2, 0.2,
 		3, 10, 0.3
 		);
-	cout << "Grid3D:\n";
-	cout << g3d_float.x0() << endl;
-	cout << g3d_float.x1() << endl;
-	cout << g3d_float.dx() << endl;
-	cout << g3d_float.nx() << endl;
 
-	cout << g3d_float.y0() << endl;
-	cout << g3d_float.y1() << endl;
-	cout << g3d_float.dy() << endl;
-	cout << g3d_float.ny() << endl;
+	LOG(INFO) << "Grid3D:" << endl;
+	LOG(INFO) << format("\t(x0,x1,dx,nx)=(%g,%g,%g,%d)") %
+		g3d_float.x0() %
+		g3d_float.x1() %
+		g3d_float.dx() %
+		g3d_float.nx() << endl;
+	
+	LOG(INFO) << format("\t(y0,y1,dy,ny)=(%g,%g,%g,%d)") %
+		g3d_float.y0() %
+		g3d_float.y1() %
+		g3d_float.dy() %
+		g3d_float.ny() << endl;
 
-	cout << g3d_float.z0() << endl;
-	cout << g3d_float.z1() << endl;
-	cout << g3d_float.dz() << endl;
-	cout << g3d_float.nz() << endl;
+	LOG(INFO) << format("\t(z0,z1,dz,nz)=(%g,%g,%g,%d)") %
+		g3d_float.z0() %
+		g3d_float.z1() %
+		g3d_float.dz() %
+		g3d_float.nz() << endl;
 
 	return;
 }
@@ -169,6 +177,8 @@ void CTest::test_grid(int argc, char **argv)
 void CTest::test_geometry(int argc, char **argv)
 {
 	using namespace std;
+	using namespace boost;
+
 	CGeometry geo(
 		342204.00, 6380040.00, 1025, 5550,
 		337685.00, 6395805.00, 1025, 6206,
@@ -186,21 +196,16 @@ void CTest::test_geometry(int argc, char **argv)
 
 	double x, y, line, cdp;
 	geo.xy2sx(geo.p4_.x_, geo.p4_.y_, line, cdp);
-	
-	cout<< line << endl;
-	cout << cdp << endl;
+	LOG(INFO)<<format("(line,cdp)=(%g,%g)") % line%cdp<<endl;
 
 	geo.sx2xy(geo.p4_.line_, geo.p4_.cdp_, x, y);
-
-	cout << x << endl;
-	cout << y << endl;
+	LOG(INFO)<< format("(x,y)=(%g,%g)") % x%y << endl;
 
 	line = 1255;
 	cdp = 5955;
 
 	geo.sx2xy(line, cdp, x, y);
-	cout << x << endl;
-	cout << y << endl;
+	LOG(INFO)<< format("(x,y)=(%g,%g)") % x%y << endl;
 
 }
 
@@ -216,4 +221,16 @@ void CTest::test_glog(int argc, char **argv)
 
 	return;
 
+}
+
+void CTest::run(int argc, char **argv)
+{
+
+	CTest::test_glog(argc, argv);
+
+	//CTest::test_mpi(argc, argv);
+	//CTest::test_boost_filesystem(argc, argv);
+	//CTest::test_boost_file_mapping(argc, argv);
+	CTest::test_grid(argc, argv);
+	CTest::test_geometry(argc, argv);
 }
