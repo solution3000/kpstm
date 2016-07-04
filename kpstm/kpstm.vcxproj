@@ -150,6 +150,7 @@
     <ClInclude Include="Card.hpp" />
     <ClInclude Include="Geometry.hpp" />
     <ClInclude Include="Grid.hpp" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="Test.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -161,6 +162,9 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="survey.JPG" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="kpstm1.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

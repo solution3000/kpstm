@@ -13,6 +13,16 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="matlab">
+      <UniqueIdentifier>{ab3a9dda-171f-4ecf-b49e-97578d7fd6c6}</UniqueIdentifier>
+      <Extensions>m</Extensions>
+    </Filter>
+    <Filter Include="images">
+      <UniqueIdentifier>{9e24071c-4070-4643-94a9-f72d74eefca3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="json">
+      <UniqueIdentifier>{806b4781-bac0-420a-84ce-24153a48cf2f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="README.txt">
@@ -20,29 +30,29 @@
     </Text>
   </ItemGroup>
   <ItemGroup>
-    <None Include="card.json">
-      <Filter>资源文件</Filter>
-    </None>
     <None Include="survey.m">
-      <Filter>资源文件</Filter>
+      <Filter>matlab</Filter>
+    </None>
+    <None Include="card.json">
+      <Filter>json</Filter>
     </None>
     <None Include="checkpoint.json">
-      <Filter>资源文件</Filter>
+      <Filter>json</Filter>
     </None>
     <None Include="geometry.json">
-      <Filter>资源文件</Filter>
+      <Filter>json</Filter>
     </None>
     <None Include="input.json">
-      <Filter>资源文件</Filter>
-    </None>
-    <None Include="output.json">
-      <Filter>资源文件</Filter>
+      <Filter>json</Filter>
     </None>
     <None Include="velocity.json">
-      <Filter>资源文件</Filter>
+      <Filter>json</Filter>
     </None>
     <None Include="xmigt.json">
-      <Filter>资源文件</Filter>
+      <Filter>json</Filter>
+    </None>
+    <None Include="output.json">
+      <Filter>json</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
@@ -56,6 +66,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Geometry.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -77,8 +90,13 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="survey.JPG">
+    <ResourceCompile Include="kpstm1.rc">
       <Filter>资源文件</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="survey.JPG">
+      <Filter>images</Filter>
     </Image>
   </ItemGroup>
 </Project>

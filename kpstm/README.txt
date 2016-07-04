@@ -22,3 +22,6 @@ BOOST
 EIGEN
 GLOG
 GFLAGS
+
+JSON: https://github.com/nlohmann/json
+
