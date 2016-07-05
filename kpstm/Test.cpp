@@ -258,17 +258,26 @@ void CTest::test_geometry(int argc, char **argv)
 	cout << geo.Mxy2sx_ << endl;
 	// 0.038452031536422   0.011022183984338   -82455.41370732605
 	//-0.011019910713241   0.038452332603035  -236006.3625749549
-	
+	CHECK_DOUBLE_EQ(geo.Mxy2sx_(0, 0), 0.038452031536422);
+	CHECK_DOUBLE_EQ(geo.Mxy2sx_(1, 0), -0.011019910713241);
+
+
 	cout << geo.Msx2xy_ << endl;
 	//24.032200357781754   -6.888719512195123  35580.3387925957
 	//6.887298747763370    24.032012195122075  623960.2851100615
+	CHECK_DOUBLE_EQ(geo.Msx2xy_(0, 0), 24.032200357781754);
+	CHECK_DOUBLE_EQ(geo.Msx2xy_(1, 0), 6.887298747763370);
 
 	double x, y, line, cdp;
 	geo.xy2sx(geo.p4_.x_, geo.p4_.y_, line, cdp);
 	LOG(INFO)<<format("(line,cdp)=(%g,%g)") % line%cdp<<endl;
+	CHECK_DOUBLE_EQ(line, geo.p4_.line_);
+	CHECK_DOUBLE_EQ(cdp, geo.p4_.cdp_);
 
 	geo.sx2xy(geo.p4_.line_, geo.p4_.cdp_, x, y);
 	LOG(INFO)<< format("(x,y)=(%g,%g)") % x%y << endl;
+	CHECK_DOUBLE_EQ(x, geo.p4_.x_);
+	CHECK_DOUBLE_EQ(y, geo.p4_.y_);
 
 	line = 1255;
 	cdp = 5955;
@@ -277,6 +286,8 @@ void CTest::test_geometry(int argc, char **argv)
 	LOG(INFO)<< format("(x,y)=(%g,%g)") % x%y << endl;
 
 }
+
+// 如何使用glog:  http://www.programgo.com/article/7481399830/;jsessionid=1AC8ADAE01EC6F1B7EBBBD5AD12B5722
 
 void CTest::test_glog(int argc, char **argv)
 {
