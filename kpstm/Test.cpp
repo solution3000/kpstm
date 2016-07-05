@@ -10,6 +10,42 @@ CTest::~CTest()
 {
 }
 
+/*
+二维网格(nx,ny),nnode个节点，
+求最优二维划分！
+*/
+static void good_partation(int nx, int ny, int nnode, int &nnode_x, int &nnode_y)
+{
+#define CEIL(n,m) ((n+m-1)/m*m)
+	int good = 1;
+	int nx_new, ny_new;
+	nx_new = CEIL(nx, good);
+	ny_new = CEIL(ny, nnode);
+	int total = nx_new*ny_new;
+
+	for (int k = 1; k <=nnode; k++)
+	{
+		if (nnode%k==0)
+		{
+			int i = k;
+			int j = nnode / k;
+			//扩张后的网格点,xy方向的网格数调整后恰好是对应节点数的整数倍
+			nx_new=CEIL(nx, i);
+			ny_new=CEIL(ny, j);
+			int t = nx_new*ny_new;
+			if (total >t)
+			{
+				total = t;
+				good = k;
+			}
+		}
+	}
+
+	nnode_x = good;
+	nnode_y = nnode / good;
+#undef CEIL
+}
+
 void CTest::test_mpi(int argc, char **argv)
 {
 	int myid, numprocs;
