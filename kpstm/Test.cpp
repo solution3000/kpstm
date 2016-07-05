@@ -28,6 +28,75 @@ void CTest::test_mpi(int argc, char **argv)
 	return;
 }
 
+// http://mpi.deino.net/mpi_functions/index.htm 
+// http://mpitutorial.com/tutorials/
+// http://mpitutorial.com/tutorials/dynamic-receiving-with-mpi-probe-and-mpi-status/
+
+
+void CTest::test_mpi_file_iread(int argc, char **argv)
+{
+	int myid, numprocs;
+	int namelen;
+
+	char processor_name[MPI_MAX_PROCESSOR_NAME];
+
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+	MPI_Get_processor_name(processor_name, &namelen);
+
+	//fprintf(stderr, "Hello World! Process %d of %d on %s\n", myid, numprocs, processor_name);
+
+	char *filename = "f:/file.txt";
+	MPI_File fh;
+
+	CHECK(MPI_SUCCESS==MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_RDONLY,
+		MPI_INFO_NULL, &fh))
+		<<"MPI_File open failed";
+
+	char buf[32];
+	
+	//non-blocked read
+	MPI_Request req;
+	CHECK(MPI_SUCCESS==MPI_File_iread(fh, buf, 31, MPI_BYTE, &req))
+		<<"MPI_File_iread failed";
+
+	//wait for read 
+	MPI_Status status;
+	CHECK(MPI_SUCCESS==MPI_Wait(&req, &status))
+		<<"MPI_Wait failed";
+	
+	/*
+	typedef struct _MPI_Status {
+		int count;
+		int cancelled;
+		int MPI_SOURCE;
+		int MPI_TAG;
+		int MPI_ERROR;
+	} MPI_Status, *PMPI_Status;
+	*/
+	
+	/*
+	  MPI_Wait函数没有置 status.MPI_ERROR
+	*/
+
+	int nbytes;
+	CHECK(MPI_SUCCESS==MPI_Get_count(&status, MPI_BYTE, &nbytes))
+		<<"MPI_Get_count failed";
+
+	buf[nbytes] = 0;
+
+	using namespace std;
+	using namespace boost;
+	cout << format("nbytes=%d")%nbytes << endl;
+	cout << buf << endl;
+	
+	CHECK(MPI_SUCCESS==MPI_File_close(&fh))
+		<<"MPI_File_close failed";
+	
+	MPI_Finalize();
+}
+
 /*
 测试的几个函数：
 is_regular_file
@@ -245,6 +314,8 @@ void CTest::run(int argc, char **argv)
 	//test_boost_file_mapping(argc, argv);
 	//test_grid(argc, argv);
 	//test_geometry(argc, argv);
-	test_card(argc, argv);
+	//test_card(argc, argv);
 	
+	test_mpi_file_iread(argc, argv);
+
 }

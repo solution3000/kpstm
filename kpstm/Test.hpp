@@ -25,6 +25,7 @@ public:
 	static void run(int argc, char **argv);
 public:
 	static void test_mpi(int argc, char **argv);
+	static void test_mpi_file_iread(int argc, char **argv);
 public:
 	static void test_boost_filesystem(int argc, char **argv);
 	static void test_boost_file_mapping(int argc, char **argv);
