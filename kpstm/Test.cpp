@@ -98,6 +98,240 @@ void CTest::test_mpi_file_iread(int argc, char **argv)
 }
 
 /*
+测试多个MPI 节点，并发读取一个本地数据，
+本地数据是一个大文件的一部分，期间所有的数据会通过MPI通信，
+在所有节点之间遍历一次(仅遍历一次):
+如果有N个节点，相当于有N个硬盘的RAID0, 读盘的同时，网络也在
+交换数据！ 平均IO所用时间：t=O(T/N)， T为一个节点读取整个大文件的时间
+通过nonblock IO, 计算会和IO overlapped, IO时间会被掩盖
+*/
+struct MsgHD
+{
+	uint16_t  flags;  //flags=1, 磁盘读写已经完成
+	uint16_t  loops;  //记录数据包经过节点的数目, loops==nnode-1, 数据包不会发送给next节点
+	int nrec;
+	char addr[0];
+};
+
+typedef float rec_t[1024]; //记录长度
+const static int NREC_PER_IO = 1024; //每次IO的REC数目
+
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/thread/thread.hpp> 
+
+void CTest::test_mpi_global_file_ring(int argc, char **argv)
+{
+	using namespace std;
+	using namespace boost;
+
+	size_t msg_len = sizeof(MsgHD) + sizeof(rec_t)*NREC_PER_IO;
+	
+	LOG(INFO) << format("Sizeof(MsgHD)=%d") % (int)sizeof(MsgHD);
+	LOG(INFO) << format("msg_len = %d") % (int)msg_len;
+
+	
+	//初始化缓冲区
+	MsgHD *disk_bufs[2];
+	MsgHD *recv_bufs[2];
+	char *buf_base = new char[4 * msg_len];
+	disk_bufs[0] = reinterpret_cast<MsgHD*>(buf_base);
+	disk_bufs[1] = reinterpret_cast<MsgHD*>(buf_base + msg_len);
+	recv_bufs[0] = reinterpret_cast<MsgHD*>(buf_base + 2 * msg_len);
+	recv_bufs[1] = reinterpret_cast<MsgHD*>(buf_base + 3 * msg_len);
+	int disk_current = 0;
+	int recv_current = 0;
+
+	MsgHD *compute_and_send_buf = 0;
+	MPI_Request reqs[2];
+	/*********************************/
+
+	//初始化工作
+	int myid, nnode;
+	int prev, next;
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+	MPI_Comm_size(MPI_COMM_WORLD, &nnode);
+	prev = myid - 1;
+	next = myid + 1;
+	prev = (prev + nnode) % nnode;
+	next = next %nnode;
+
+	char *filename_base = "f:/file";
+	char filename[1024];
+	sprintf_s(filename, "%s.%d", filename_base, myid);
+	
+	MPI_File fh;
+
+	goto J200;
+
+	//每个节点生成一个磁盘文件
+	CHECK(MPI_SUCCESS==MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &fh))
+		<<"MPI_File_open failed";
+	
+	float *wbuf = (float*)disk_bufs[0]->addr;
+	
+	int total_rec = (110 + myid * 10)*NREC_PER_IO + 10;
+	LOG(INFO) << format("%d: total_rec=%d") % myid%total_rec;
+
+	for (int i = 0; i < total_rec; i++)
+	{
+		int n = sizeof(rec_t) / sizeof(float);
+		
+		for (int j = 0; j < n; j++)
+		{
+			wbuf[j] = 2000 * (myid+1) + i;
+		}
+
+		MPI_Status status;
+		CHECK(MPI_SUCCESS == MPI_File_write(fh, wbuf, sizeof(rec_t), MPI_BYTE, &status))
+			<< "MPI_File_write failed";
+
+		int count;
+		CHECK(MPI_SUCCESS == MPI_Get_count(&status, MPI_BYTE, &count))
+			<<"MPI_Get_count failed";
+
+		CHECK(count == sizeof(rec_t)) << "file_write failed";
+
+		LOG_EVERY_N(INFO, 100) <<format("%d, i=%d")%myid%i;
+	}
+	
+	CHECK(MPI_SUCCESS == MPI_File_close(&fh))
+		<< "MPI_File_close failed";
+
+
+	goto J100;
+
+
+J200:
+
+	//======================================================================================================
+
+	CHECK(MPI_SUCCESS == MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh))
+		<< "MPI_File_open failed";
+
+	LOG(INFO) << "After MPI_File_open " << filename;
+
+	int nbytes = sizeof(rec_t)*NREC_PER_IO;
+
+
+	/*
+	顺序很重要，一定irecv在iread前面：iread是数据源，irecv是接受者,否者会死锁
+	*/
+
+	//发起异步网络接收数据
+	CHECK(MPI_SUCCESS == MPI_Irecv(recv_bufs[recv_current], msg_len, MPI_BYTE, prev, MPI_ANY_TAG, MPI_COMM_WORLD, &reqs[0]))
+		<< "MPI_Irecv failed";
+	//发起异步磁盘读数据
+	CHECK(MPI_SUCCESS==MPI_File_iread(fh, disk_bufs[disk_current]->addr, nbytes, MPI_BYTE, &reqs[1]))
+		<<"MPI_File_iread failed";
+
+	int total_finished = 0;  //结束标识
+	int recv_counts[100] = { 0 }; //统计信息
+
+	LOG(INFO) << "Enter do{}while";
+	do
+	{
+		int which = -1;
+		MPI_Status status;
+		
+		/*
+		MPI_Waitany 应该是按次序查询的，顺序很重要！
+		*/
+		CHECK(MPI_SUCCESS==MPI_Waitany(2, reqs, &which, &status))
+			<<"MPI_Waitany failed";
+		int tag;
+		if (which == 0) //处理网络数据
+		{
+			tag = status.MPI_TAG;
+
+			compute_and_send_buf = recv_bufs[recv_current];
+			compute_and_send_buf->loops++;
+
+			recv_counts[tag] += compute_and_send_buf->nrec;
+
+			recv_current = (recv_current + 1) % 2;
+			//发起异步网络接收数据
+			CHECK(MPI_SUCCESS == MPI_Irecv(recv_bufs[recv_current], msg_len, MPI_BYTE, prev, MPI_ANY_TAG, MPI_COMM_WORLD, &reqs[0]))
+					<< "MPI_Irecv failed";
+		}
+		else if (which == 1) //处理磁盘IO
+		{
+			tag = myid;
+
+			compute_and_send_buf = disk_bufs[disk_current];
+
+			int count;
+			CHECK(MPI_SUCCESS == MPI_Get_count(&status, MPI_BYTE, &count))
+				<< "MPI_Get_count failed";
+			
+			CHECK(count%sizeof(rec_t) == 0);
+
+			compute_and_send_buf->nrec = count / sizeof(rec_t);
+			compute_and_send_buf->loops= 1;
+
+			recv_counts[tag] += compute_and_send_buf->nrec;
+			
+			//文件尾部处理
+			if (count == nbytes) 
+			{
+				
+				compute_and_send_buf->flags = 0;
+				disk_current = (disk_current + 1) % 2;
+				//发起异步磁盘读数据
+				CHECK(MPI_SUCCESS == MPI_File_iread(fh, disk_bufs[disk_current]->addr, nbytes, MPI_BYTE, &reqs[1]))
+					<< "MPI_File_iread failed";
+			}
+			else
+			{
+				compute_and_send_buf->flags = 1;
+			}
+		}
+		MPI_Request send_req;
+		MPI_Status  send_status;
+
+		if (compute_and_send_buf->loops!=nnode)
+		{
+			//MPI_Send(compute_and_send_buf, msg_len, MPI_BYTE, next, tag, MPI_COMM_WORLD);
+			CHECK(MPI_SUCCESS==MPI_Isend(compute_and_send_buf, msg_len, MPI_BYTE, next, tag, MPI_COMM_WORLD, &send_req))
+				<<"MPI_Isend failed";
+		}
+
+		//模拟计算函数
+		//do_compute(compute_and_send_buf);
+		boost::this_thread::sleep(boost::posix_time::milliseconds(50 + 50 * myid));
+
+
+		if (compute_and_send_buf->loops != nnode)
+		{
+			CHECK(MPI_SUCCESS == MPI_Wait(&send_req, &send_status))
+				<< "MPI_Wait failed";
+		}
+
+		if (compute_and_send_buf->flags == 1)
+		{
+			total_finished++;
+		}
+
+	} while (total_finished != nnode);
+
+	//if (myid == 0)
+	LOG(INFO)<< format("%d: recv_counts={%d,%d,%d,%d}") % myid
+		% recv_counts[0]
+		% recv_counts[1]
+		% recv_counts[2]
+		% recv_counts[3] << endl;
+	
+	//取消irecv req
+	MPI_Cancel(&reqs[0]);
+	MPI_File_close(&fh);
+
+J100:
+	MPI_Finalize();
+	delete[]buf_base;
+}
+
+
+/*
 测试的几个函数：
 is_regular_file
 file_size
@@ -327,6 +561,7 @@ void CTest::run(int argc, char **argv)
 	//test_geometry(argc, argv);
 	//test_card(argc, argv);
 	
-	test_mpi_file_iread(argc, argv);
+	//test_mpi_file_iread(argc, argv);
+	test_mpi_global_file_ring(argc, argv);
 
 }
