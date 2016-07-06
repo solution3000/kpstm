@@ -374,7 +374,7 @@ J100:
 }
 
 /*
-ROOT读取文件，然后通过ring接力的方式将数据传给后面的节点
+ROOT读取文件，然后通过ring接力的方式将数据广播给后面的节点
 */
 
 void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
@@ -385,7 +385,7 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 
 	static const int TAG_NORM = 0;      //正常数据
 	static const int TAG_EOF  = 1;       //end of file!
-	static const int TAG_BARRIER = 4;   //需要进行同步MPI_Barrier
+	static const int TAG_BARRIER = 2;   //需要进行同步MPI_Barrier
 
 	MPI_Init(&argc, &argv);
 
@@ -420,7 +420,7 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 
 	char *filename = "f:/file.0";
 
-	MPI_File fh;
+	MPI_File fh=MPI_FILE_NULL;
 	MPI_Request disk_req, recv_req, send_req;
 
 	if (myid == 0){ //root 读打开文件读数据
@@ -438,6 +438,7 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 			<< "MPI_Irecv failed";
 	}
 	int loops = 0;
+	int recv_counts = 0;
 	while (1)
 	{
 		if (myid == 0) //读数据，计算，转发
@@ -465,14 +466,19 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 			sbuf->loops = 1;
 			sbuf->nrec = count / sizeof(rec_t);
 			
+			cerr << format("#0: loops: %d, nrec=%d") % loops%sbuf->nrec << endl;
+
+			recv_counts += sbuf->nrec;
+
+			
 			//文件结束标志
-			if (count < msg_len)
+			if (count < nbytes)
 			{
 				tag=TAG_EOF;
 			}
 
 			//触发检查点条件
-			if (loops % 100 == 0)
+			if (loops % 10 == 0)
 			{
 				tag += TAG_BARRIER;
 			}
@@ -480,8 +486,8 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 			CHECK(MPI_SUCCESS==MPI_Isend(sbuf, msg_len, MPI_BYTE, next, tag, MPI_COMM_WORLD, &send_req))
 				<<"MPI_Isend failed";
 
-			//本地计算
-			//do_compute(sbuf);
+			//模拟计算函数
+			boost::this_thread::sleep(boost::posix_time::milliseconds(50 + 50 * myid));
 
 			CHECK(MPI_SUCCESS==MPI_Wait(&send_req, &status))
 				<<"MPI_Wait failed";
@@ -492,7 +498,14 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 				CHECK(MPI_SUCCESS==MPI_Barrier(MPI_COMM_WORLD))
 					<<"MPI_Barrier failed";
 				//do_checkpoint();
+				LOG(INFO) << format("Barrier: recv_counts: %d") % recv_counts << endl;
 			}
+
+			float *p = (float*)sbuf->addr;
+			LOG(INFO) << format("loops: %d, float: %g") % loops%p[0] << endl;
+
+			loops++;
+
 			if (tag&TAG_EOF)
 			{
 				CHECK(MPI_SUCCESS==MPI_Cancel(&disk_req))
@@ -502,7 +515,6 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 				break;
 			}
 
-			loops++;
 		}
 		else //接收，计算，转发
 		{
@@ -511,6 +523,8 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 				<<"MPI_Wait failed";
 
 			MsgHD *rbuf = recv_bufs[recv_current];
+			
+			recv_counts += rbuf->nrec;
 			
 			//发起异步RECV
 			recv_current = (recv_current + 1) % 2;
@@ -522,8 +536,8 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 			CHECK(MPI_SUCCESS==MPI_Isend(rbuf, msg_len, MPI_BYTE, next, tag, MPI_COMM_WORLD, &send_req))
 				<<"MPI_Isend failed";
 
-			//本节点上计算
-			//do_compute(rbuf);
+			//模拟计算函数
+			boost::this_thread::sleep(boost::posix_time::milliseconds(50 + 50 * myid));
 
 
 			CHECK(MPI_SUCCESS==MPI_Wait(&send_req, &status))
@@ -535,7 +549,14 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 					<< "MPI_Barrier failed";
 				//检查点工作
 				//do_checkpoint()
+				LOG(INFO) << format("Barrier: recv_counts: %d") % recv_counts << endl;
 			}
+
+			float *p = (float*)rbuf->addr;
+			LOG(INFO) << format("loops: %d, float: %g") % loops%p[0] << endl;
+
+			loops++;
+
 
 			if (tag&TAG_EOF)
 			{
@@ -545,11 +566,15 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 				break;
 			}
 			
-		}
-	}
+
+		}//if(myid==0)
+
+	}//while(1)
 
 	CHECK(MPI_SUCCESS==MPI_Barrier(MPI_COMM_WORLD))
 		<<"MPI_Barrier failed";
+	
+	LOG(INFO) << format("Finished, recv_counts:%d") %recv_counts<< endl;
 
 	delete[]buf_base;
 	MPI_Finalize();
@@ -787,6 +812,7 @@ void CTest::run(int argc, char **argv)
 	//test_card(argc, argv);
 	
 	//test_mpi_file_iread(argc, argv);
-	test_mpi_global_file_ring(argc, argv);
+	//test_mpi_global_file_ring(argc, argv);
+	test_mpi_ring_bcast_file(argc, argv);
 
 }
