@@ -422,15 +422,16 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 
 	MPI_File fh;
 	MPI_Request disk_req, recv_req, send_req;
-	if (myid == 0){
-		CHECK(MPI_SUCCESS == MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &fh))
+
+	if (myid == 0){ //root 读打开文件读数据
+		CHECK(MPI_SUCCESS == MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &fh))
 			<< "MPI_File_open failed";
 
 		//发起异步READ
 		CHECK(MPI_SUCCESS == MPI_File_iread(fh, disk_bufs[disk_current]->addr, nbytes, MPI_BYTE, &disk_req))
 			<< "MPI_File_iread failed";
 	}
-	else
+	else //其他节点接收，转发
 	{
 		//发起异步RECV
 		CHECK(MPI_SUCCESS == MPI_Irecv(recv_bufs[recv_current], msg_len, MPI_BYTE, prev, MPI_ANY_TAG, MPI_COMM_WORLD, &recv_req))
@@ -439,7 +440,7 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 	int loops = 0;
 	while (1)
 	{
-		if (myid == 0)
+		if (myid == 0) //读数据，计算，转发
 		{
 			MPI_Status status;
 			CHECK(MPI_SUCCESS==MPI_Wait(&disk_req, &status))
@@ -467,7 +468,7 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 			//文件结束标志
 			if (count < msg_len)
 			{
-				tag += TAG_EOF;
+				tag=TAG_EOF;
 			}
 
 			//触发检查点条件
@@ -500,8 +501,10 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 					<<"MPI_File_close failed";
 				break;
 			}
+
+			loops++;
 		}
-		else
+		else //接收，计算，转发
 		{
 			MPI_Status status;
 			MPI_Wait(&recv_req, &status);
