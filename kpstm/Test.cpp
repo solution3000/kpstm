@@ -43,6 +43,11 @@ static void good_partation(int nx, int ny, int nnode, int &nnode_x, int &nnode_y
 
 	nnode_x = good;
 	nnode_y = nnode / good;
+	
+	CHECK_EQ(nnode, nnode_x*nnode_y);
+
+	return;
+
 #undef CEIL
 }
 
@@ -132,6 +137,8 @@ void CTest::test_mpi_file_iread(int argc, char **argv)
 	
 	MPI_Finalize();
 }
+
+
 
 /*
 测试多个MPI 节点，并发读取一个本地数据，
@@ -366,6 +373,179 @@ J100:
 	delete[]buf_base;
 }
 
+/*
+	ROOT读取文件，然后通过ring接力的方式将数据传给后面的节点
+*/
+
+void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
+{
+
+	using namespace std;
+	using namespace boost;
+
+	static const int TAG_NORM = 0;      //正常数据
+	static const int TAG_EOF  = 1;       //end of file!
+	static const int TAG_BARRIER = 4;   //需要进行同步MPI_Barrier
+
+	MPI_Init(&argc, &argv);
+
+	int myid, nnode;
+	int prev, next;
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+	MPI_Comm_size(MPI_COMM_WORLD, &nnode);
+	prev = myid - 1;
+	next = myid + 1;
+	if (prev < 0) prev = MPI_PROC_NULL;
+	if (next == nnode) next = MPI_PROC_NULL;
+
+	size_t msg_len = sizeof(MsgHD) + sizeof(rec_t)*NREC_PER_IO;
+	int nbytes = sizeof(rec_t)*NREC_PER_IO;
+
+
+	LOG(INFO) << format("Sizeof(MsgHD)=%d") % (int)sizeof(MsgHD);
+	LOG(INFO) << format("msg_len = %d") % (int)msg_len;
+
+
+	//初始化缓冲区, double buffers
+	MsgHD *disk_bufs[2];  //只有root节点需要
+	MsgHD *recv_bufs[2];
+	char *buf_base = new char[4 * msg_len];
+	disk_bufs[0] = reinterpret_cast<MsgHD*>(buf_base);
+	disk_bufs[1] = reinterpret_cast<MsgHD*>(buf_base + msg_len);
+	recv_bufs[0] = reinterpret_cast<MsgHD*>(buf_base + 2 * msg_len);
+	recv_bufs[1] = reinterpret_cast<MsgHD*>(buf_base + 3 * msg_len);
+	int disk_current = 0;
+	int recv_current = 0;
+
+
+	char *filename = "f:/file.0";
+
+	MPI_File fh;
+	MPI_Request disk_req, recv_req, send_req;
+	if (myid == 0){
+		CHECK(MPI_SUCCESS == MPI_File_open(MPI_COMM_SELF, filename, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &fh))
+			<< "MPI_File_open failed";
+
+		//发起异步READ
+		CHECK(MPI_SUCCESS == MPI_File_iread(fh, disk_bufs[disk_current]->addr, nbytes, MPI_BYTE, &disk_req))
+			<< "MPI_File_iread failed";
+	}
+	else
+	{
+		//发起异步RECV
+		CHECK(MPI_SUCCESS == MPI_Irecv(recv_bufs[recv_current], msg_len, MPI_BYTE, prev, MPI_ANY_TAG, MPI_COMM_WORLD, &recv_req))
+			<< "MPI_Irecv failed";
+	}
+	int loops = 0;
+	while (1)
+	{
+		if (myid == 0)
+		{
+			MPI_Status status;
+			CHECK(MPI_SUCCESS==MPI_Wait(&disk_req, &status))
+				<<"MPI_Wait failed";
+			
+			int tag = TAG_NORM;
+
+			int count = 0;
+			CHECK(MPI_SUCCESS==MPI_Get_count(&status, MPI_BYTE, &count))
+				<<"MPI_Get_count failed";
+
+			CHECK(count%sizeof(rec_t) == 0);
+
+			MsgHD *sbuf = disk_bufs[disk_current];
+			
+			disk_current = (disk_current + 1) % 2;
+			//发起异步READ
+			CHECK(MPI_SUCCESS == MPI_File_iread(fh, disk_bufs[disk_current]->addr, nbytes, MPI_BYTE, &disk_req))
+				<< "MPI_File_iread failed";
+
+			sbuf->flags = 0;
+			sbuf->loops = 1;
+			sbuf->nrec = count / sizeof(rec_t);
+			
+			//文件结束标志
+			if (count < msg_len)
+			{
+				tag += TAG_EOF;
+			}
+
+			//触发检查点条件
+			if (loops % 100 == 0)
+			{
+				tag += TAG_BARRIER;
+			}
+	
+			CHECK(MPI_SUCCESS==MPI_Isend(sbuf, msg_len, MPI_BYTE, next, tag, MPI_COMM_WORLD, &send_req))
+				<<"MPI_Isend failed";
+
+			//本地计算
+			//do_compute(sbuf);
+
+			CHECK(MPI_SUCCESS==MPI_Wait(&send_req, &status))
+				<<"MPI_Wait failed";
+
+
+			if (tag&TAG_BARRIER)
+			{
+				CHECK(MPI_SUCCESS==MPI_Barrier(MPI_COMM_WORLD))
+					<<"MPI_Barrier failed";
+				//do_checkpoint();
+			}
+			if (tag&TAG_EOF)
+			{
+				CHECK(MPI_SUCCESS==MPI_Cancel(&disk_req))
+					<<"MPI_Cancel failed";
+				CHECK(MPI_SUCCESS==MPI_File_close(&fh))
+					<<"MPI_File_close failed";
+				break;
+			}
+		}
+		else
+		{
+			MPI_Status status;
+			MPI_Wait(&recv_req, &status);
+			MsgHD *rbuf = recv_bufs[recv_current];
+			
+			//发起异步RECV
+			recv_current = (recv_current + 1) % 2;
+			CHECK(MPI_SUCCESS==MPI_Irecv(recv_bufs[recv_current], msg_len, MPI_BYTE, prev, MPI_ANY_TAG, MPI_COMM_WORLD, &recv_req))
+				<<"MPI_Irecv failed";
+
+			int tag = status.MPI_TAG;
+			//转发给下一个NODE
+			CHECK(MPI_SUCCESS==MPI_Isend(rbuf, msg_len, MPI_BYTE, next, tag, MPI_COMM_WORLD, &send_req))
+				<<"MPI_Isend failed";
+
+			//本节点上计算
+			//do_compute(rbuf);
+
+
+			CHECK(MPI_SUCCESS==MPI_Wait(&send_req, &status))<<"MPI_Wait failed";
+
+			if (tag&TAG_BARRIER)
+			{
+				CHECK(MPI_SUCCESS == MPI_Barrier(MPI_COMM_WORLD)) << "MPI_Barrier failed";
+				//检查点工作
+				//do_checkpoint()
+			}
+
+			if (tag&TAG_EOF)
+			{
+				//退出
+				CHECK(MPI_SUCCESS==MPI_Cancel(&recv_req))<<"MPI_Cancel failed";
+				break;
+			}
+			
+		}
+	}
+
+	CHECK(MPI_SUCCESS==MPI_Barrier(MPI_COMM_WORLD))
+		<<"MPI_Barrier failed";
+
+	MPI_Finalize();
+
+}
 
 /*
 测试的几个函数：
