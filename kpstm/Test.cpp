@@ -374,7 +374,7 @@ J100:
 }
 
 /*
-	ROOT读取文件，然后通过ring接力的方式将数据传给后面的节点
+ROOT读取文件，然后通过ring接力的方式将数据传给后面的节点
 */
 
 void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
@@ -507,7 +507,9 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 		else //接收，计算，转发
 		{
 			MPI_Status status;
-			MPI_Wait(&recv_req, &status);
+			CHECK(MPI_SUCCESS==MPI_Wait(&recv_req, &status))
+				<<"MPI_Wait failed";
+
 			MsgHD *rbuf = recv_bufs[recv_current];
 			
 			//发起异步RECV
@@ -524,11 +526,13 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 			//do_compute(rbuf);
 
 
-			CHECK(MPI_SUCCESS==MPI_Wait(&send_req, &status))<<"MPI_Wait failed";
+			CHECK(MPI_SUCCESS==MPI_Wait(&send_req, &status))
+				<<"MPI_Wait failed";
 
 			if (tag&TAG_BARRIER)
 			{
-				CHECK(MPI_SUCCESS == MPI_Barrier(MPI_COMM_WORLD)) << "MPI_Barrier failed";
+				CHECK(MPI_SUCCESS == MPI_Barrier(MPI_COMM_WORLD)) 
+					<< "MPI_Barrier failed";
 				//检查点工作
 				//do_checkpoint()
 			}
@@ -536,7 +540,8 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 			if (tag&TAG_EOF)
 			{
 				//退出
-				CHECK(MPI_SUCCESS==MPI_Cancel(&recv_req))<<"MPI_Cancel failed";
+				CHECK(MPI_SUCCESS==MPI_Cancel(&recv_req))
+					<<"MPI_Cancel failed";
 				break;
 			}
 			
@@ -546,6 +551,7 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 	CHECK(MPI_SUCCESS==MPI_Barrier(MPI_COMM_WORLD))
 		<<"MPI_Barrier failed";
 
+	delete[]buf_base;
 	MPI_Finalize();
 
 }
