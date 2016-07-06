@@ -581,6 +581,64 @@ void CTest::test_mpi_ring_bcast_file(int argc, char **argv)
 
 }
 
+
+#include <omp.h>
+/*
+测试MPI+OPENMP混合并行模式
+*/
+void CTest::test_mpi_openmp(int argc, char **argv)
+{
+	using namespace std;
+	using namespace boost;
+
+	//初始化工作
+	int required = MPI_THREAD_MULTIPLE;
+	int provided;
+	MPI_Init_thread(&argc, &argv, required, &provided);
+	CHECK_EQ(required, provided);
+	LOG(INFO) << format("MPI_Init_thread, provided=%d") % provided << endl;
+
+	int myid, nnode;
+	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+	MPI_Comm_size(MPI_COMM_WORLD, &nnode);
+
+	int prev, next;
+	prev = myid - 1;
+	next = myid + 1;
+	if (prev < 0) prev = MPI_PROC_NULL;
+	if (next == nnode) next = MPI_PROC_NULL;
+
+#pragma omp parallel
+	{
+		int tid=omp_get_thread_num();
+		int nthread = omp_get_num_threads();
+		
+		#pragma omp single
+		{
+			LOG(INFO) << format("omp: %d, %d") % nthread%tid << endl;
+		}
+
+		int buf;
+		int tag;
+		if (myid == 0)
+		{
+			buf = 100 + tid;
+			tag = tid;
+		}
+		else
+		{
+			MPI_Status status;
+			MPI_Recv(&buf, 1, MPI_INT, prev, tid, MPI_COMM_WORLD, &status);
+			tag = status.MPI_TAG;
+			CHECK_EQ(tag, tid);
+			CHECK_EQ(buf, 100 + tid);
+		}
+		MPI_Send(&buf, 1, MPI_INT, next, tag, MPI_COMM_WORLD);
+	}
+
+	MPI_Finalize();
+}
+
 /*
 测试的几个函数：
 is_regular_file
@@ -813,6 +871,7 @@ void CTest::run(int argc, char **argv)
 	
 	//test_mpi_file_iread(argc, argv);
 	//test_mpi_global_file_ring(argc, argv);
-	test_mpi_ring_bcast_file(argc, argv);
+	//test_mpi_ring_bcast_file(argc, argv);
+	test_mpi_openmp(argc, argv);
 
 }
