@@ -8,6 +8,7 @@
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/format.hpp>
 
+#define GOOGLE_GLOG_DLL_DECL
 #include <glog/logging.h>
 
 #include "Grid.hpp"

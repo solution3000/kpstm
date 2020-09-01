@@ -602,6 +602,8 @@ void CTest::test_mpi_openmp(int argc, char **argv)
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 	MPI_Comm_size(MPI_COMM_WORLD, &nnode);
 
+	std::cout << format("myid=%d, nnode=%d") % myid % nnode << std::endl;
+
 	int prev, next;
 	prev = myid - 1;
 	next = myid + 1;
@@ -833,13 +835,17 @@ void CTest::test_geometry(int argc, char **argv)
 
 void CTest::test_glog(int argc, char **argv)
 {
-	google::InitGoogleLogging(argv[0]);
-	google::SetLogDestination(google::INFO, "./log.txt");
+	FLAGS_logtostderr = 1;
 
-	LOG(INFO) << "FOUND" << google::COUNTER << std::endl;
-	LOG(INFO) << "hello, world";
-	LOG(WARNING) << "warning test";
-	LOG(ERROR) << "error test";
+	google::InitGoogleLogging(argv[0]);
+	//google::SetLogDestination(google::INFO, "./log.txt");
+
+	//LOG(INFO) << "FOUND" << google::COUNTER << std::endl;
+	//LOG(INFO) << "hello, world";
+	//LOG(WARNING) << "warning test";
+	//LOG(ERROR) << "error test";
+
+	std::cout << "Enter test_glog" << std::endl;
 
 	return;
 
